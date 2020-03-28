@@ -1,0 +1,1 @@
+wsl ./lightbox-player.sh
