@@ -1,3 +1,9 @@
+
+FILMS/*
+MPLAYER/*
+*.lnk
+
+####
 cache.inc
 
 # Windows image file caches
@@ -15,9 +21,6 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
-
-# Windows shortcuts
-*.lnk
 
 # =========================
 # Operating System Files
