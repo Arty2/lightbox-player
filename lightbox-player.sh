@@ -1,15 +1,14 @@
 #!/bin/bash
 ## lightbox-player.sh
-## A method to play one video with different subtitles across multiple monitors or projectors.
-##
-## Requirements: Windows 10, Windows for Linux Subsystem, socat, bc
-## 
-##
-
 VERSION=20200328-01
-BEBUG=false # true: DEBUG mode enabled
-BRANDED=false # true: Play intro and outro
+##
+## A Bash script to play one video with different subtitles across multiple monitors or projectors.
+## GitHub repository: https://github.com/Arty2/lightbox-player
+## Requirements: Windows 10, Mplayer, Windows for Linux Subsystem, socat, bc
+## 
 
+BEBUG=false # when true, DEBUG mode is enabled
+BRANDED=true # when true, Play intro and outro
 
 PATH=$PATH:./mplayer # add ./mplayer directory to path
 
@@ -76,29 +75,98 @@ do
 done
 
 ## display a menu to select film
+CALLIBRATION=false # default is false
 FILE=$(dialog --clear \
     --backtitle "lightbox-player v:"$VERSION \
     --title "" \
     --menu "Select a film, then press Enter:" \
     15 50 15 \
     "${MENU[@]}" \
-    2>&1 >$(tty))
+    2>&1 >$(tty)) || CALLIBRATION=true
 
 ## find video files in selected directory
 ## look into including additional files (of same length) in the future
-FILM=$(find "${FILES[$FILE]}" -type f | grep -E "\.mp4$|\.mkv$|\.mov$|\.avi$" | head -1) # | head -1 only returns the first file
-if [ -z "$FILM" ] # check if empty
+FILM=$(find "${FILES[$FILE]}" -type f | grep -E "\.mp4$|\.mkv$|\.mov$|\.avi$" | head -1) # head -1 only returns the first file
+if [ -z "$FILM" ] # check if empty, or canceled
 then # run callibration routine if no match
-    FILM='./CALLIBRATION/callibration.mkv'
+    CALLIBRATION=true
 else # search for subtitles
-    SUBTITLES=("${FILES[$FILE]}"/*.srt) 
+    SUBTITLES=("${FILES[$FILE]}"/*.srt)
 fi
+
+echo $FILM
 
 ## workaround for lack of subtitles
 SUBTITLES+=(0 0 0 0) # subtitles for each screen
 
 # echo $FILM # DEBUG
 # printf '%s\n' "${SUBTITLES[@]}" # DEBUG
+
+## CALLIBRATION mode
+if [[ $CALLIBRATION == true ]]
+then
+    FILM='./CALLIBRATION/callibration.png'
+    # PLAYERARGS=(\
+    # "-udp-master -fs -screen -2"
+    # )
+fi
+
+echo $FILM
+
+## calculate top offset
+TOPOFFSETS=(0 0 0 0) # initialize array
+for x in $( seq 0 $(( MAXSCREENS - 1)) ); do
+    TOPOFFSETS[$(( MAXSCREENS - 1 - x ))]=$( floor $( calc "$VOFFSET * $x" ) )
+done
+
+## manual adjust for placement of screens
+SWAP=${TOPOFFSETS[1]}
+TOPOFFSETS[1]=${TOPOFFSETS[2]}
+TOPOFFSETS[2]=$SWAP
+
+# printf '%s\n' "${TOPOFFSETS[@]}" # DEBUG
+
+## display step in the terminal
+echo -e "\e[103m\e[30mlightbox-player:\e[90m Playing intro...\e[0m" $(date -u)
+
+## play intro video across all screens
+## aspect ration should match the total projection size
+## ; at the end of line pauses execution of following command until this line exits
+if [[ $BRANDED == true ]]
+then
+    mplayer.exe -really-quiet \
+        -nomouseinput -nojoystick -nolirc \
+        -vo direct3d -fixed-vo \
+        -ao dsound \
+        ./FILMS/Ultrawide/instascroll_loop_horizontal.mp4 -loop 0;
+    ## play loop afterwards: http://lists.mplayerhq.hu/pipermail/mplayer-users/2013-July/086351.html
+    # mplayer.exe -vo direct3d -fixed-vo -xy 3000 -geometry 0:0 intro.mp4 -idle;
+fi
+
+## display step in the terminal
+echo -e "\e[103m\e[30mlightbox-player:\e[90m Playing film...\e[0m" $(date -u)
+
+## Mplayer arguments for each screen
+## perhaps incorporate in the loop
+PLAYERARGS=(\
+    "-udp-master -fs" \
+    "-udp-slave  -fs -nosound " \
+    "-udp-slave  -fs -nosound " \
+    "-udp-slave  -fs -nosound " \
+    )
+
+## DEBUG arguments
+## perhaps incorporate in the loop
+## "-ss 00:01:50" is the time offset for Sintel demo
+if [[ $DEBUG == true ]] # if single monitor, then enter debug mode for 4 screens
+then
+    PLAYERARGS=(\
+        "-udp-master -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 0 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[3]} * MONWIDTH / SCREENS / PROJWIDTH )) " \
+        "-udp-slave  -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 1 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[2]} * MONWIDTH / SCREENS / PROJWIDTH ))  -nosound " \
+        "-udp-slave  -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 2 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[1]} * MONWIDTH / SCREENS / PROJWIDTH ))  -nosound " \
+        "-udp-slave  -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 3 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[0]} * MONWIDTH / SCREENS / PROJWIDTH ))  -nosound " \
+        )
+fi
 
 ## get width and height of video
 VIDWIDTH=$(mplayer.exe -really-quiet \
@@ -111,64 +179,23 @@ VIDHEIGHT=$(mplayer.exe -really-quiet \
     grep -o '[0-9]\+')
 VIDASPECT=$(( VIDWIDTH / VIDHEIGHT )) # integer, 0 if 3:4, 1 if full HD, 2 if Widescreen
 
-## calculate top offset
-TOPOFFSETS=(0 0 0 0) # initialize array
-for x in $( seq 0 $(( MAXSCREENS - 1)) ); do
-    TOPOFFSETS[$(( MAXSCREENS - 1 - x ))]=$( floor $( calc "$VOFFSET * $x" ) )
-done
-# manual adjust for placement of screens
-SWAP=${TOPOFFSETS[1]}
-TOPOFFSETS[1]=${TOPOFFSETS[2]}
-TOPOFFSETS[2]=$SWAP
-# TOPOFFSETS=(256 87 174 0) # as calculated
-# 256 instead of 87*4 because of rounding error?
-
-# printf '%s\n' "${TOPOFFSETS[@]}" # DEBUG
-
-## display step in the terminal
-echo -e "\e[103m\e[30mlightbox-player:\e[90m Playing intro...\e[0m" $(date -u)
-
-## play intro video across all screens
-## aspect ration should match the total projection size
-## ; at the end of line pauses execution of following command until this line exits
-if [ $BRANDED = true ]
-then
-    mplayer.exe -really-quiet \
-        -vo direct3d -fixed-vo \
-        -xy 3000 -geometry 0:0 \
-        ./INTRO/intro.mp4 -loop 0;
-fi
-
-## play loop afterwards: http://lists.mplayerhq.hu/pipermail/mplayer-users/2013-July/086351.html
-# mplayer.exe -vo direct3d -fixed-vo -xy 3000 -geometry 0:0 intro.mp4 -idle;
-
-## display step in the terminal
-echo -e "\e[103m\e[30mlightbox-player:\e[90m Playing film...\e[0m" $(date -u)
-
-## mplayer arguments for each screen
-PLAYERARGS=(\
-    "-udp-master -fs" \
-    "-udp-slave  -fs -nosound " \
-    "-udp-slave  -fs -nosound " \
-    "-udp-slave  -fs -nosound " \
-    )
-
-## DEBUG arguments
-## "-ss 00:01:50" is the time offset for Sintel demo
-if [ $DEBUG = true ] # if single monitor, then enter debug mode for 4 screens
-then
-    PLAYERARGS=(\
-        "-udp-master -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 0 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[3]} * MONWIDTH / SCREENS / PROJWIDTH )) " \
-        "-udp-slave  -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 1 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[2]} * MONWIDTH / SCREENS / PROJWIDTH ))  -nosound " \
-        "-udp-slave  -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 2 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[1]} * MONWIDTH / SCREENS / PROJWIDTH ))  -nosound " \
-        "-udp-slave  -screen 0 -osdlevel 3 -ss 00:01:50 -xy $(( MONWIDTH / SCREENS )) -noborder -geometry $(( 3 * MONWIDTH / SCREENS )):$(( ${TOPOFFSETS[0]} * MONWIDTH / SCREENS / PROJWIDTH ))  -nosound " \
-        )
-fi
-
 ## reset offset if ratio is less than widescreen
+## keep this statement after the DEBUG arguments to simulate position of projections
 if [ $VIDASPECT -lt 2 ]
 then
     TOPOFFSETS=(0 0 0 0)
+fi
+
+## if ratio is extraordinaly large
+## then it's probably once video that should play across all screens
+## this case is not simulated in DEBUG mode
+if [ $VIDASPECT -gt 3 ]
+then
+    SCREENS=1
+    TOPOFFSETS=(0 0 0 0)
+    PLAYERARGS=(\
+    "-udp-master -fs -screen -2"
+    )
 fi
 
 ## transmit UDP data required for slave instances to additional ports for them to listen at

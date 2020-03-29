@@ -17,13 +17,13 @@ This script is designed to power and facilitate the physical constrains of [Ligh
 
 ## Additional controls
 
-- Hit the <kbd>Esc</kbd> key at any point to interrupt the playback.
+- Hit the <kbd>Esc</kbd> or <kbd>q</kbd> key at any point to interrupt the playback.
 - Hit the <kbd>spacebar</kbd> to pause or unpause at any time, across all player instances.
 - Use the <kbd>←</kbd> and <kbd>→</kbd> (left and right) arrow keys to rewind or skip respectively.
 - Use the <kbd>0</kbd> and <kbd>9</kbd> keys to decrease or increase the audio levels.
 - Hit the <kbd>O</kbd> to display elapsed / remaining playback time.
 
-All [keyboard shortcusts](http://sheet.shiar.nl/mplayer) for  *mplayer*’s playback apply, but subtitle or other controls may only apply on the first instance.
+All [keyboard shortcusts](http://sheet.shiar.nl/mplayer) for  *Mplayer*’s playback apply, but subtitle or other controls may only apply on the first instance.
 
 
 ## Auto-discovery of video files
@@ -49,11 +49,11 @@ The script will search inside the `./FILMS` directory for subdirectories, which 
 
 The *lightbox-player* is designed to work with minimum input from the operator. It starts with double-clicking the `PLAY.bat` file, which in turn runs the `lightbox-player.sh` script without having to manually open a terminal. [Creating a shortcut](https://www.computerhope.com/issues/ch000739.htm) on the desktop allows to “hide” the script and related files elsewhere. Alternatively, the `PLAY.bat` file can be set to [run automatically on startup](https://www.computerhope.com/issues/ch000322.htm).
 
-A graphical prompt allows the selection of films discovered in the preset `./FILMS` directory. If no video files are found within, then a default callibration routine will start playing in loop until interrupted with the <kbd>Esc</kbd> key.
+A graphical prompt allows the selection of films discovered in the preset `./FILMS` directory. If no video files are found within, then a default callibration routine will start playing in loop until interrupted with the <kbd>Esc</kbd> or <kbd>q</kbd> key.
 
 ![Screenshor of the film selection prompt](./README/screenshot_prompt.png)
 
-The script used *mplayer* to manage video and audio output, in a master-slave setup to synchronise playback across all instances. Because *mplayer* is designed to work with the master and slave instances each on a different computer, *socat* is used to relay the required UDP data to additional slave instances on the same machine on different ports.
+The script used *Mplayer* to manage video and audio output, in a master-slave setup to synchronise playback across all instances. Because *Mplayer* is designed to work with the master and slave instances each on a different computer, *socat* is used to relay the required UDP data to additional slave instances on the same machine on different ports.
 
 A few built-in Windows 10 utilities (*wmic.exe* and *powershell*) are used to obtain the width, height and number of monitors connected. These are used for entering the automatic *DEBUG mode* and creating as many instances as required.
 
@@ -96,8 +96,8 @@ The screenshots above show [*Sintel*](https://durian.blender.org/) and [*Big Buc
 
 - Windows 10 and a few built-in utilities. Required for hardware compatibility with the physical device.
 - [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10) (WSL). Installed through the Windows Store (e.g. Ubuntu).
-- [mplayer](http://www.mplayerhq.hu/) ([Windows x86_64 binary](https://oss.netfarm.it/mplayer/)) which is used for media playback. Install in the `./MPLAYER` directory, relative to the script. It’s important to use the Windows binary over one installed through WSL, as the latter does not properly support audio output and will fail to run.
-- [socat](https://linux.die.net/man/1/socat) to allow *mplayer* to connect to multiple slave instances. Install in WSL with `sudo apt install socat`.
+- [Mplayer](http://www.mplayerhq.hu/) ([Windows x86_64 binary](https://oss.netfarm.it/mplayer/)) which is used for media playback. Install in the `./MPLAYER` directory, relative to the script. It’s important to use the Windows binary over one installed through WSL, as the latter does not properly support audio output and will fail to run.
+- [socat](https://linux.die.net/man/1/socat) to allow *Mplayer* to connect to multiple slave instances. Install in WSL with `sudo apt install socat`.
 - [bc](https://linux.die.net/man/1/bc) to allow non-integer calculations. Install in WSL with `sudo apt install bc`.
 
 Before installing utilities in WSL, you may want to update the repository lists with `sudo apt-get update`.
@@ -106,18 +106,17 @@ Before installing utilities in WSL, you may want to update the repository lists 
 ## Future improvements
 
 - [ ] Allow automatic playback of intro and outro sequence. (in progress)
-- [ ] Use a static image in place of the callibration video.
+- [ ] Allow playback of different video files or images per instance (requirement: exact same length) if discovered ont he same directory.
+- [x] Use a static image in place of the callibration video.
 - [ ] Align subtitles to screen (1) when in “equal-height” mode.
 - [ ] Include a script to install depedencies automatically on the first use. May not install WSL automatically, but can fail gracefully instead.
-- [ ] Allow playback of different video files per instance (requirement: exact same length) if discovered ont he same directory.
-- [ ] When a video file’s width is beyond the width of the first connected screen, it should play in one instance instead of multiple.
+- [x] When a video file’s width is beyond the width of the first connected screen, it should play in one instance instead of multiple.
 
 
 ## Known issues & Limitations
 
 - Only works “as is” under Windows 10 as it uses a few built-in utilities. This is a “won’t-fix” limitation.
-- The first time you use it, Windows Firewall will complain about *socat*, and it’s necessary to allow it otherwise synchronised playback won’t work.
-- Callibration video files are missing from this release, thus the script will exit if no videos are found within the `./FILMS` directory.
+- The first time you use it, Windows Firewall will complain about *Mplayer*, and it’s necessary to allow it otherwise synchronised playback won’t work.
 - May malfunction when more than 4 screens are connected.
 - Sometimes, *wmic.exe* returns the wrong width if an additional monitor was previously connected. Only affects the *DEBUG mode*.
 
