@@ -28,7 +28,7 @@ All [keyboard shortcusts](http://sheet.shiar.nl/mplayer) for  *Mplayer*’s play
 
 ## Auto-discovery of video files
 
-The script will search inside the `./FILMS` directory for subdirectories, which should contain at least one video file (*.mp4* / *.mkv* / *.mov* / *.avi* formats) and a number of subtitles (*.srt* format). The alphabetical order of the subtitle files determines which instance they will play at. When no video file is found within the selected directory, or when the operator selects `CANCEL` then a callibration video file is played instead.
+The script will search inside the `./FILMS` directory for subdirectories, which should contain at least one video file (*.mp4* / *.mkv* / *.mov* / *.avi* formats) and a number of subtitles (*.srt* format). The alphabetical order of the subtitle files determines which instance they will play at. When no video file is found within the selected directory, or when the operator selects `CANCEL` then a callibration image file is played instead.
 
 ### Example structure of `./FILMS` directory
 
@@ -108,6 +108,7 @@ Before installing utilities in WSL, you may want to update the repository lists 
 - [ ] Allow automatic playback of intro and outro sequence. (in progress)
 - [ ] Allow playback of different video files or images per instance (requirement: exact same length) if discovered ont he same directory.
 - [x] Use a static image in place of the callibration video.
+- [ ] Add a looping audio file for callibration mode.
 - [ ] Align subtitles to screen (1) when in “equal-height” mode.
 - [ ] Include a script to install depedencies automatically on the first use. May not install WSL automatically, but can fail gracefully instead.
 - [x] When a video file’s width is beyond the width of the first connected screen, it should play in one instance instead of multiple.
